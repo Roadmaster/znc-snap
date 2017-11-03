@@ -1,0 +1,31 @@
+name: znc-roadmr 
+version: '1.6.5'
+summary: Advanced modular IRC bouncer 
+description: |
+ znc is an IRC proxy. It runs as a daemon and connects to IRC server,
+ then allows you to connect from a workstation and work as the user that
+ is logged in to the IRC server. After you disconnect, it maintains the
+ connection to the server. It acts like any normal IRC server, so you can
+ use any IRC client to connect to it.
+
+ Some of its features include support for multiple users, multiple clients,
+ and multiple IRC servers; playback buffers to catch up with what happened
+ while you were detached, SSL encryption, DCC proxying, and a plugin
+ interface with many plugins supporting other features.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  znc:
+    source: https://znc.in/releases/znc-1.6.5.tar.gz
+    build-packages:
+        - build-essential
+        - libssl-dev
+        - libperl-dev
+        - pkg-config
+        - swig3.0
+        - libicu-dev
+    plugin: autotools
+    #    configflags:
+    #    - --libdir=${SNAP}/lib
