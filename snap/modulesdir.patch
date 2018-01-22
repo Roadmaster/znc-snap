@@ -1,0 +1,85 @@
+diff --git a/include/znc/Modules.h b/include/znc/Modules.h
+index 2dfc5c57..613c7c4d 100644
+--- a/include/znc/Modules.h
++++ b/include/znc/Modules.h
+@@ -1559,7 +1559,7 @@ class CModules : public std::vector<CModule*> {
+     // Return a list of <module dir, data dir> pairs for directories in
+     // which modules can be found.
+     typedef std::queue<std::pair<CString, CString>> ModDirList;
+-    static ModDirList GetModDirs();
++    static ModDirList GetModDirs(CString sExtraModPath= "");
+ 
+     // Global Modules
+     bool OnAddUser(CUser& User, CString& sErrorRet);
+diff --git a/src/Modules.cpp b/src/Modules.cpp
+index 86b30c79..2db4e13e 100644
+--- a/src/Modules.cpp
++++ b/src/Modules.cpp
+@@ -1805,6 +1805,8 @@ void CModules::GetAvailableMods(set<CModInfo>& ssMods,
+ 
+     while (!dirs.empty()) {
+         Dir.FillByWildcard(dirs.front().first, "*.so");
++        std::cout << "ROADMR" << std::endl;
++        std::cout << dirs.front().first << std::endl;
+         dirs.pop();
+ 
+         for (a = 0; a < Dir.size(); a++) {
+@@ -1869,7 +1871,7 @@ bool CModules::FindModPath(const CString& sModule, CString& sModPath,
+     return false;
+ }
+ 
+-CModules::ModDirList CModules::GetModDirs() {
++CModules::ModDirList CModules::GetModDirs(CString sExtraModPath) {
+     ModDirList ret;
+     CString sDir;
+ 
+@@ -1887,6 +1889,10 @@ CModules::ModDirList CModules::GetModDirs() {
+     ret.push(std::make_pair(_MODDIR_ + CString("/"),
+                             _DATADIR_ + CString("/modules/")));
+ 
++    // Custom module path
++    // TODO only append / and the path itself it it's not empty string.
++    ret.push(std::make_pair(sExtraModPath + "/", sExtraModPath + "/"));
++
+     return ret;
+ }
+ 
+diff --git a/src/main.cpp b/src/main.cpp
+index 0416e642..32b43883 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -126,6 +126,7 @@ static const struct option g_LongOpts[] = {
+     {"makepass", no_argument, nullptr, 's'},
+     {"makepem", no_argument, nullptr, 'p'},
+     {"datadir", required_argument, nullptr, 'd'},
++    {"moduledir", required_argument, nullptr, 'm'},
+     {nullptr, 0, nullptr, 0}};
+ 
+ static void GenerateHelp(const char* appname) {
+@@ -140,6 +141,8 @@ static void GenerateHelp(const char* appname) {
+     CUtils::PrintMessage(
+         "\t-d, --datadir      Set a different ZNC repository (default is "
+         "~/.znc)");
++    CUtils::PrintMessage(
++        "\t-m, --moduledir    Add an additional path where to look for modules");
+     CUtils::PrintMessage(
+         "\t-D, --debug        Output debugging information (Implies -f)");
+     CUtils::PrintMessage("\t-f, --foreground   Don't fork into the background");
+@@ -284,6 +287,7 @@ static void seedPRNG() {
+ int main(int argc, char** argv) {
+     CString sConfig;
+     CString sDataDir = "";
++    CString sModuleDir = "";
+ 
+     thread_setup();
+ 
+@@ -336,6 +340,9 @@ int main(int argc, char** argv) {
+             case 'd':
+                 sDataDir = CString(optarg);
+                 break;
++            case 'm':
++                sModuleDir = CString(optarg);
++                break;
+             case 'f':
+                 bForeground = true;
+                 break;
